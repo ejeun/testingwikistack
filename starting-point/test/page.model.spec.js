@@ -14,21 +14,47 @@ describe('Page model', function () {
     return Page.sync({ force: true });
   });
 
-  beforeEach('populate our tables with test data', function() {
+  describe('Validations', function () {
+
+    var page1;
+
+    beforeEach(function() {
+        page1 = Page.build({
+        // title: '',
+        // content: 'A mythical creature',
+        // status: 'open',
+        // tags: 'big,foot,mythical'
+      });
+
+    });
+
+    it('errors without title', function(done) {
+
+        page1.validate()
+        .then(function(err) {
+          console.log("Our errors:" + err.errors);
+          expect(err).to.exist;
+          expect(err.errors).to.exist;
+          expect(err.errors[0].path).to.equal('title');
+          done();
+        })
+
+    });
+
+    it('errors without content', function() {
+
+    });
+
+    it('errors given an invalid status', function() {
+
+    });
 
   });
 
-  describe('Tags value should be set correctly', function () {
+  // describe('Hook.......', function () {
 
-    it('if one tag, then return that tag');
-
-    it('if multiple tags, then return an array of them');
-  });
-
-  describe('Hook.......', function () {
-
-    it('if given title, formats the urltitle with no spaces and symbols');
-  });
+  //   it('if given title, formats the urltitle with no spaces and symbols');
+  // });
 
   describe('getter methods (virtual fields)', function () {
 
@@ -37,22 +63,122 @@ describe('Page model', function () {
       page = Page.build();
     });
 
-    it('route should return the urltitle with "/wiki/" prepended');
+    it('route should return the urltitle with "/wiki/" prepended', function () {
       page.urlTitle = 'test_title';
-      expect(page.route).to.be('/wiki/test_title');
+      expect(page.route).to.be.equal('/wiki/test_title');
+    });
+
 
     it('renderedContent converts the markdown-formatted content into HTML');
   });
 
   describe('class method: find by tag', function () {
 
-    it('finds all the pages with the specific tag');
+    beforeEach(function(done) {
+       Page.create({
+        title: 'Lakes',
+        content: 'Big bodies of water',
+        status: 'open',
+        tags: 'water,big,landscape'
+      })
+       .then(function() {
+        done();
+       })
+       .catch(done);   
+    });
 
-    it('does not return the pages without the specific tag');
+
+    it('finds all the pages with the specific tag', function () {
+      return Page.findByTag('water')
+              .then(function(foundPages) {
+                var justTitles = foundPages.map(function (page) {
+                  return page.title;
+                });
+                return justTitles;
+              })
+              .then(function(pages) {
+                expect(pages).to.be.deep.equal(['Lakes']);
+              })
+    });
+
+    it('does not return the pages without the specific tag', function () {
+       return Page.findByTag('fish')
+              .then(function(foundPages) {
+                var justTitles = foundPages.map(function (page) {
+                  return page.title;
+                });
+                return justTitles;
+              })
+              .then(function(pages) {
+                expect(pages).to.be.deep.equal([]);
+              })
+    });
   });
 
   describe('instance method: find similar', function () {
 
-    it('finds all the pages that shares tags with it, excluding itself');
+    var page1, page2, page3;
+
+    beforeEach(function() {
+
+      page1 = Page.create({
+        title: 'Bigfoot',
+        content: 'A mythical creature',
+        status: 'open',
+        tags: 'big,foot,mythical'
+      })
+
+      page2 = Page.create({
+        title: 'Mountain',
+        content: 'A big landscape feature',
+        status: 'closed',
+        tags: 'big'
+      })
+
+      page3 = Page.create({
+        title: 'Fish',
+        content: 'A creature that lives in water',
+        status: 'open',
+        tags: 'water,gills'
+      })
+
+
+      return Promise.all([
+        page1,
+        page2,
+        page3
+        ])
+      .then(function(pages) {
+        page1 = pages[0];
+        page2 = pages[1];
+        page3 = pages[2];
+      });
+
+    });
+
+    
+
+    it('finds all the pages that shares tags with it, excluding itself', function () {
+      return page1.findSimilar()
+      .then(function(foundPages) {
+        var justTitles = foundPages.map(function (page) {
+          return page.title;
+        });
+        return justTitles;
+      })
+      .then(function(pages) {
+        expect(pages).to.be.deep.equal(['Mountain']);
+      });
+
+    });
   });
 });
+
+
+
+
+
+
+
+
+
