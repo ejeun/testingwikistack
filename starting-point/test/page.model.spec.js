@@ -22,39 +22,70 @@ describe('Page model', function () {
         page1 = Page.build({
         // title: '',
         // content: 'A mythical creature',
-        // status: 'open',
         // tags: 'big,foot,mythical'
       });
-
     });
 
     it('errors without title', function(done) {
 
         page1.validate()
         .then(function(err) {
-          console.log("Our errors:" + err.errors);
           expect(err).to.exist;
           expect(err.errors).to.exist;
           expect(err.errors[0].path).to.equal('title');
           done();
         })
-
     });
 
-    it('errors without content', function() {
+    it('errors without content', function(done) {
 
+      page1.validate()
+        .then(function(err) {
+          expect(err).to.exist;
+          expect(err.errors).to.exist;
+          expect(err.errors[2].path).to.equal('content');
+          done();
+        })
     });
 
     it('errors given an invalid status', function() {
-
+      Page.create({
+        title: 'hello',
+        content: 'this is a greeting',
+        status: 'finished'
+      })
+        .then(function(newPage) {})
+        .catch(function(err){
+          expect(err.message).to.equal('invalid input value for enum enum_pages_status: "finished"');
+        })
     });
 
   });
 
-  // describe('Hook.......', function () {
+  describe('Hook.......', function () {
 
-  //   it('if given title, formats the urltitle with no spaces and symbols');
-  // });
+    var page1;
+
+    beforeEach(function(done) {
+       Page.create({
+        title: 'beautiful lakes',
+        content: 'Big bodies of water',
+        status: 'open',
+        tags: 'water,big,landscape'
+      })
+       .then(function(newPage) {
+        page1 = newPage;
+        done();
+       })
+       .catch(done);
+    });
+
+    it('if given title, formats the urltitle with no spaces and symbols', function(){
+
+      expect(page1.urlTitle).to.be.equal('beautiful_lakes');
+
+    });
+  });
 
   describe('getter methods (virtual fields)', function () {
 
@@ -84,7 +115,7 @@ describe('Page model', function () {
        .then(function() {
         done();
        })
-       .catch(done);   
+       .catch(done);
     });
 
 
@@ -156,7 +187,7 @@ describe('Page model', function () {
 
     });
 
-    
+
 
     it('finds all the pages that shares tags with it, excluding itself', function () {
       return page1.findSimilar()
